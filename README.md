@@ -1,50 +1,64 @@
-# Welcome to your Expo app 👋
+# Idle.
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A list that fights you back.
 
-## Get started
+Five tasks. No more. Every task needs a reason. The app shuts off at 7pm and burns everything unfinished on Friday at 5pm. No notification spam. No streaks. No scores.
 
-1. Install dependencies
+Productivity for people who hate productivity.
 
-   ```bash
-   npm install
-   ```
+---
 
-2. Start the app
+## The rules
 
-   ```bash
-   npx expo start
-   ```
+- **Five is the cap.** The list refuses a sixth task.
+- **Every task needs a 'why'.** No reason, no add.
+- **7pm lockout.** Idle refuses to open after 7pm on weekdays and all day on weekends.
+- **Friday burns.** Every Friday at 5pm local time, every unfinished task is permanently deleted. No carry-over. No archive. Monday starts empty.
+- **Refusal counts.** A refused task is celebrated equally. The list shrinks either way.
+- **No notifications by default.** One optional morning bell ("Today is fresh.") that stays off until you turn it on.
+- **No streaks. No scores.** Nothing to gamify. You will not be ranked.
 
-In the output, you'll find options to open the app in a
+The full manifesto lives inside the app at [app/about.tsx](app/about.tsx).
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+---
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Tech
 
-## Get a fresh project
+- Expo SDK 54 + React Native 0.81 + TypeScript
+- `expo-router` (file-based routing), but with a single state-driven gate at `app/index.tsx`
+- AsyncStorage for persistence (everything stays on-device — no backend, no tracking, no ads)
+- Bricolage Grotesque + Manrope + JetBrains Mono — three fonts, no more
+- Three colors: ink `#1A1A1A`, cream `#F5F0E8`, pink `#FF3D6E`
 
-When you're ready, run:
+---
+
+## Run locally
 
 ```bash
-npm run reset-project
+npm install
+npm start              # interactive QR — scan with Expo Go on your phone
+npm run web            # web build at http://localhost:8081
+npm run ios            # iOS simulator (Xcode required)
+npm run android        # Android emulator (Android Studio required)
+npx tsc --noEmit       # type check
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+---
 
-## Learn more
+## Testing
 
-To learn more about developing your project with Expo, look at the following resources:
+There's a hidden **DEV** panel visible only in development builds — small pink pill top-right of the BrandBar. Tap it to seed sample data across multiple days, force the locked/burn screens, trigger the Friday Burn on demand, or reset everything back to first-launch.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Full guide: [app-testing.md](app-testing.md).
 
-## Join the community
+---
 
-Join our community of developers creating universal apps.
+## Status
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Pre-launch. Work in progress.
+
+---
+
+## License
+
+All rights reserved. © Varun Ajain.
