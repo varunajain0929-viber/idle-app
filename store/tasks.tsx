@@ -541,8 +541,11 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  // Dev-only escape hatches. Wrapped in __DEV__ so a production build can't
+  // wipe a real user's tasks even if the dev route is somehow reached.
   const devReplaceAll = useCallback(
     (next: Task[]) => {
+      if (!__DEV__) return;
       const stamped = next.map(t => ({ ...t, ...stamp() }));
       // Anything currently on the device that's not in the new set should be deleted remotely too.
       const nextIds = new Set(stamped.map(t => t.id));
@@ -557,6 +560,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
   );
 
   const devClearStorage = useCallback(async () => {
+    if (!__DEV__) return;
     const allKeys = await AsyncStorage.getAllKeys();
     const idleKeys = allKeys.filter(k => k.startsWith('idle.'));
     if (idleKeys.length > 0) {

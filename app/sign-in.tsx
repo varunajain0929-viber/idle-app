@@ -49,7 +49,7 @@ export default function SignIn() {
         label="PASSWORD"
         value={password}
         onChangeText={setPassword}
-        placeholder="At least six characters."
+        placeholder="Your password."
         secure
         textContentType="password"
         returnKeyType="go"

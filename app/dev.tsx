@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { DevSettings, Platform, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -22,6 +22,15 @@ const SEED_GATE_KEY = 'idle.onboarded.v1';
 type ArmedMode = null | 'full' | 'empty';
 
 export default function Dev() {
+  // Hard production gate. Expo Router registers every file in app/ as a route,
+  // so without this check the destructive dev actions below (sign-out, wipe
+  // every idle.* key, force burn) could be reached in a production build via
+  // a crafted `idle://dev` deep link.
+  useEffect(() => {
+    if (!__DEV__) router.replace('/');
+  }, []);
+  if (!__DEV__) return null;
+
   const { devReplaceAll, devClearStorage, burn, tasks, openCount } = useTasks();
   const { signOut } = useAuth();
   const { set: setOverride } = useDevOverride();

@@ -19,7 +19,7 @@ export default function SignUp() {
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
 
-  const ready = email.trim().length > 0 && password.length >= 6;
+  const ready = email.trim().length > 0 && password.length >= 8;
 
   const submit = async () => {
     if (!ready) return;
@@ -74,7 +74,7 @@ export default function SignUp() {
         label="PASSWORD"
         value={password}
         onChangeText={setPassword}
-        placeholder="At least six characters."
+        placeholder="At least eight characters."
         secure
         textContentType="newPassword"
         returnKeyType="go"

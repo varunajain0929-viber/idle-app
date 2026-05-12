@@ -31,13 +31,36 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+// RFC-ish email shape check. We're not trying to validate that the address is
+// real (only the confirmation email can do that) — just rejecting obvious
+// garbage before it hits the network.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const MIN_PASSWORD = 8;
+const MAX_PASSWORD = 128;
+const MAX_EMAIL = 254;
+
+function isValidEmail(email: string): boolean {
+  return email.length > 0 && email.length <= MAX_EMAIL && EMAIL_RE.test(email);
+}
+
+function validatePassword(password: string): string | null {
+  if (password.length < MIN_PASSWORD) {
+    return `Your password needs to be at least ${MIN_PASSWORD} characters.`;
+  }
+  if (password.length > MAX_PASSWORD) {
+    return `Your password is too long. Keep it under ${MAX_PASSWORD} characters.`;
+  }
+  return null;
+}
+
 function friendlyError(err: unknown): string {
   const raw = err instanceof Error ? err.message : String(err ?? '');
   const lower = raw.toLowerCase();
   if (lower.includes('invalid login credentials')) return "That email and password don't match. Try again.";
   if (lower.includes('user already registered')) return 'An account with this email already exists. Sign in instead.';
   if (lower.includes('email not confirmed')) return 'Check your inbox and tap the confirm link before signing in.';
-  if (lower.includes('password should be')) return 'Your password needs to be at least 6 characters.';
+  if (lower.includes('password should be')) return `Your password needs to be at least ${MIN_PASSWORD} characters.`;
+  if (lower.includes('rate limit') || lower.includes('too many')) return 'Too many tries. Wait a minute and try again.';
   if (lower.includes('network')) return "We couldn't reach the server. Check your signal and try again.";
   return raw || 'Something went wrong. Try again.';
 }
@@ -83,8 +106,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = useCallback(async (email: string, password: string): Promise<AuthResult> => {
+    const cleanEmail = email.trim().toLowerCase();
+    if (!isValidEmail(cleanEmail)) {
+      return { ok: false, message: "That doesn't look like an email." };
+    }
+    if (password.length === 0 || password.length > MAX_PASSWORD) {
+      return { ok: false, message: 'Type your password.' };
+    }
     const { error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
+      email: cleanEmail,
       password,
     });
     if (error) return { ok: false, message: friendlyError(error) };
@@ -92,8 +122,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signUp = useCallback(async (email: string, password: string): Promise<SignUpResult> => {
+    const cleanEmail = email.trim().toLowerCase();
+    if (!isValidEmail(cleanEmail)) {
+      return { ok: false, message: "That doesn't look like an email." };
+    }
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      return { ok: false, message: passwordError };
+    }
     const { data, error } = await supabase.auth.signUp({
-      email: email.trim(),
+      email: cleanEmail,
       password,
       options: { emailRedirectTo: REDIRECT_URL },
     });
@@ -109,7 +147,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const resetPassword = useCallback(async (email: string): Promise<AuthResult> => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+    const cleanEmail = email.trim().toLowerCase();
+    if (!isValidEmail(cleanEmail)) {
+      return { ok: false, message: "That doesn't look like an email." };
+    }
+    const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
       redirectTo: REDIRECT_URL,
     });
     if (error) return { ok: false, message: friendlyError(error) };
