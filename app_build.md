@@ -156,6 +156,13 @@ If you (or a designer) want to check the design intent against what we built:
 
 A running log. Every time something is added, removed, or changed, it gets a line here.
 
+### 12 May 2026 — Fix: Supabase auth crashed during web pre-render
+Hit this while running the web build to capture App Store screenshots. The Supabase auth client was handed `AsyncStorage` directly as its storage adapter. AsyncStorage's web shim peeks at `window.localStorage` the moment it's wired up, and during Expo Router's static export there is no `window` (it's running in Node, no browser). The whole build crashed at `getValue` with "window is not defined" before a single screen could render.
+
+- **The fix.** Wrap `AsyncStorage` in a tiny `ssrSafeStorage` adapter. `getItem` / `setItem` / `removeItem` each check `typeof window !== 'undefined'` first; if there's no window, they return a resolved-null Promise instead of touching AsyncStorage. In the browser and on device, behaviour is unchanged.
+- **Why it matters.** Without this, anyone running `npm run web` (and Expo's own static export inside EAS Build) hits the same crash. It only shows up when `web.output: "static"` is set in `app.json` — which it is, for SEO-friendly pre-rendering.
+- **Files touched:** `lib/supabase.ts`.
+
 ### 12 May 2026 — App Store prep (code side)
 Did the small code changes the App Store needs before we can ask Apple to publish Idle. Nothing about the app behaves differently — these are stamps and paperwork, not features.
 
