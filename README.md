@@ -2,7 +2,7 @@
 
 A list that fights you back.
 
-Five tasks. No more. Every task needs a reason. The app shuts off at 7pm and burns everything unfinished on Friday at 5pm. No notification spam. No streaks. No scores.
+Five tasks. No more. Every task needs a reason. The app shuts off at 9pm and burns everything unfinished on Friday at 7pm. No notification spam. No streaks. No scores.
 
 Productivity for people who hate productivity.
 
@@ -12,8 +12,8 @@ Productivity for people who hate productivity.
 
 - **Five is the cap.** The list refuses a sixth task.
 - **Every task needs a 'why'.** No reason, no add.
-- **7pm lockout.** Idle refuses to open after 7pm on weekdays and all day on weekends.
-- **Friday burns.** Every Friday at 5pm local time, every unfinished task is permanently deleted. No carry-over. No archive. Monday starts empty.
+- **9pm lockout.** Idle refuses to open after 9pm on weekdays and all day on weekends.
+- **Friday burns.** Every Friday at 7pm local time, every unfinished task is permanently deleted. No carry-over. No archive. Monday starts empty.
 - **Refusal counts.** A refused task is celebrated equally. The list shrinks either way.
 - **No notifications by default.** One optional morning bell ("Today is fresh.") that stays off until you turn it on.
 - **No streaks. No scores.** Nothing to gamify. You will not be ranked.

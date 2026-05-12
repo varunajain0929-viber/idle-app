@@ -17,8 +17,15 @@ import { MonoLabel } from '@/components/idle/MonoLabel';
 import { PinkRule } from '@/components/idle/PinkRule';
 import { Wordmark } from '@/components/idle/Wordmark';
 import { useTasks } from '@/store/tasks';
+import { useAuth } from '@/store/auth';
 
-export const ONBOARDED_KEY = 'idle.onboarded.v3';
+// Legacy device-wide key. Kept for backward compat — if it's set we treat the
+// current user as already onboarded on this device.
+export const LEGACY_ONBOARDED_KEY = 'idle.onboarded.v3';
+export const ONBOARDED_KEY_PREFIX = 'idle.onboarded.v3.';
+export function onboardedKeyFor(userId: string) {
+  return `${ONBOARDED_KEY_PREFIX}${userId}`;
+}
 
 type Card = {
   label: string;
@@ -45,12 +52,12 @@ const CARDS: Card[] = [
   {
     label: 'FRIDAY',
     title: 'Everything burns.',
-    body: 'On Friday at 5pm, the unfinished is deleted. No carry-over. No archive. Monday starts empty.',
+    body: 'On Friday at 7pm, the unfinished is deleted. No carry-over. No archive. Monday starts empty.',
   },
   {
-    label: '7PM',
+    label: '9PM',
     title: 'The app closes.',
-    body: 'After 7pm and on weekends, Idle refuses to open. No override. So should you.',
+    body: 'After 9pm and on weekends, Idle refuses to open. No override. So should you.',
   },
 ];
 
@@ -60,6 +67,7 @@ export default function Onboarding() {
   const [index, setIndex] = useState(0);
   const scroller = useRef<ScrollView>(null);
   const { finishOnboarding } = useTasks();
+  const { user } = useAuth();
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const next = Math.round(e.nativeEvent.contentOffset.x / SCREEN_W);
@@ -82,7 +90,9 @@ export default function Onboarding() {
 
   const finish = async () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    await AsyncStorage.setItem(ONBOARDED_KEY, '1');
+    if (user) {
+      await AsyncStorage.setItem(onboardedKeyFor(user.id), '1');
+    }
     finishOnboarding();
     router.replace('/');
   };

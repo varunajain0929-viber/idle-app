@@ -116,7 +116,7 @@ export function LockedScreen() {
           </View>
 
           <View style={{ marginTop: space.s4 }}>
-            <Row label="Weekdays" value="7pm — 6am" />
+            <Row label="Weekdays" value="9pm — 6am" />
             <Row label="Weekends" value="All day" />
             <Row label="Override" value="None" last />
           </View>

@@ -1,8 +1,9 @@
-import { Pressable, ScrollView, Switch, View } from 'react-native';
+import { Alert, Pressable, ScrollView, Switch, View } from 'react-native';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { colors, space } from '@/constants/tokens';
 import { useSettings } from '@/store/settings';
+import { useAuth } from '@/store/auth';
 import { IdleText } from '../IdleText';
 import { MonoLabel } from '../MonoLabel';
 
@@ -29,13 +30,13 @@ const RULES: Rule[] = [
   {
     id: 'burn',
     name: 'Friday burns.',
-    body: 'Every Friday at 5pm local time, everything unfinished is deleted. No carry-over. No archive.',
+    body: 'Every Friday at 7pm local time, everything unfinished is deleted. No carry-over. No archive.',
     locked: false,
   },
   {
     id: 'lockout',
-    name: '7pm lockout.',
-    body: 'Idle refuses to open after 7pm. So should you.',
+    name: '9pm lockout.',
+    body: 'Idle refuses to open after 9pm. So should you.',
     locked: false,
   },
   {
@@ -60,6 +61,7 @@ const RULES: Rule[] = [
 
 export function RulesScreen() {
   const { morningBellEnabled, setMorningBellEnabled, hydrated } = useSettings();
+  const { user, signOut } = useAuth();
 
   const handleBellToggle = async (next: boolean) => {
     Haptics.selectionAsync();
@@ -67,6 +69,24 @@ export function RulesScreen() {
     if (next && !ok) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     }
+  };
+
+  const handleSignOut = () => {
+    Alert.alert(
+      'Sign out.',
+      'Your tasks are saved in the cloud. Sign back in any time to bring them back.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign out',
+          style: 'destructive',
+          onPress: () => {
+            Haptics.selectionAsync();
+            void signOut();
+          },
+        },
+      ],
+    );
   };
 
   return (
@@ -225,10 +245,27 @@ export function RulesScreen() {
         >
           <MonoLabel style={{ marginBottom: space.s3 }}>ACCOUNT</MonoLabel>
           <View style={{ gap: space.s3 }}>
-            <Row label="Email" value="you@idle.app" />
+            <Row label="Email" value={user?.email ?? '—'} />
             <Row label="Plan" value="Free · £0 forever" />
-            <Row label="Member since" value="May 2026" />
           </View>
+          <Pressable
+            onPress={handleSignOut}
+            style={({ pressed }) => ({
+              paddingTop: space.s5,
+              paddingBottom: space.s2,
+              opacity: pressed ? 0.6 : 1,
+            })}
+          >
+            <IdleText
+              style={{
+                fontFamily: 'BricolageGrotesque_500Medium',
+                fontSize: 15,
+                color: colors.pink,
+              }}
+            >
+              Sign out.
+            </IdleText>
+          </Pressable>
         </View>
 
         <Pressable

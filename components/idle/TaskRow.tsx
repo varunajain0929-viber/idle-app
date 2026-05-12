@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, View, type TextLayoutLine } from 'react-native';
 import Svg, { Polyline, Line } from 'react-native-svg';
 import Animated, {
   useSharedValue,
@@ -16,6 +16,7 @@ import { colors, motion, space } from '@/constants/tokens';
 import type { Task } from '@/store/tasks';
 import { doneWord, refuseWord, doneHaptic } from '@/lib/variants';
 import { IdleText } from './IdleText';
+import { AnimatedStrikeLine } from './AnimatedStrike';
 
 const EASE = Easing.bezier(motion.easing[0], motion.easing[1], motion.easing[2], motion.easing[3]);
 const STRIKE_MS = motion.layout;
@@ -46,6 +47,7 @@ export function TaskRow({ task, onToggle, onRefuse, onReopen, onSetEstimate }: P
   const progress = useSharedValue(struck ? 1 : 0);
   const prevStatus = useRef(task.status);
   const [estimatorOpen, setEstimatorOpen] = useState(false);
+  const [textLines, setTextLines] = useState<TextLayoutLine[]>([]);
   const estimatorTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -127,10 +129,6 @@ export function TaskRow({ task, onToggle, onRefuse, onReopen, onSetEstimate }: P
   const fillStyle = useAnimatedStyle(() => ({
     opacity: progress.value,
     transform: [{ scale: 0.5 + 0.5 * progress.value }],
-  }));
-
-  const strikeStyle = useAnimatedStyle(() => ({
-    width: `${progress.value * 100}%`,
   }));
 
   const checkOpacityStyle = useAnimatedStyle(() => ({
@@ -215,8 +213,9 @@ export function TaskRow({ task, onToggle, onRefuse, onReopen, onSetEstimate }: P
         </Pressable>
 
         <View style={{ flex: 1, minWidth: 0 }}>
-          <View style={{ position: 'relative', alignSelf: 'flex-start' }}>
+          <View style={{ position: 'relative' }}>
             <IdleText
+              onTextLayout={e => setTextLines(e.nativeEvent.lines)}
               style={{
                 fontFamily: 'BricolageGrotesque_500Medium',
                 fontSize: 17,
@@ -227,20 +226,14 @@ export function TaskRow({ task, onToggle, onRefuse, onReopen, onSetEstimate }: P
             >
               {task.text}
             </IdleText>
-            <Animated.View
-              pointerEvents="none"
-              style={[
-                {
-                  position: 'absolute',
-                  left: -2,
-                  top: '50%',
-                  marginTop: -1,
-                  height: 2,
-                  backgroundColor: isRefused ? colors.pink : colors.ink50,
-                },
-                strikeStyle,
-              ]}
-            />
+            {textLines.map((line, i) => (
+              <AnimatedStrikeLine
+                key={i}
+                progress={progress}
+                line={line}
+                color={isRefused ? colors.pink : colors.ink50}
+              />
+            ))}
           </View>
           <IdleText
             style={{

@@ -1,10 +1,10 @@
 export type AppState = 'open' | 'locked' | 'burn';
 
 const OPEN_HOUR = 6;
-const LOCK_HOUR = 19;
+const LOCK_HOUR = 21;
 const BURN_DAY = 5;
-const BURN_START_HOUR = 17;
-const BURN_END_HOUR = 19;
+const BURN_START_HOUR = 19;
+const BURN_END_HOUR = 21;
 
 export function getAppState(now: Date = new Date()): AppState {
   const day = now.getDay();

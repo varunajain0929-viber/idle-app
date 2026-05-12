@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -9,10 +9,14 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import { colors, radii, space } from '@/constants/tokens';
 import { useTasks } from '@/store/tasks';
 import { IdleText } from '@/components/idle/IdleText';
 import { PinkRule } from '@/components/idle/PinkRule';
+import { sharpenWhy } from '@/lib/ai';
+
+type SharpenStatus = 'idle' | 'loading' | 'shown' | 'noop' | 'gone';
 
 export default function AddTask() {
   const { addTask } = useTasks();
@@ -20,13 +24,63 @@ export default function AddTask() {
   const [why, setWhy] = useState('');
   const [focused, setFocused] = useState<'task' | 'why' | null>(null);
 
+  const [sharpenStatus, setSharpenStatus] = useState<SharpenStatus>('idle');
+  const [sharpenSuggestion, setSharpenSuggestion] = useState<string | null>(null);
+
   const ready = text.trim().length > 0 && why.trim().length > 0;
   const taskOnly = text.trim().length > 0 && why.trim().length === 0;
+
+  // If the user wipes the why field, reset Sharpen so they can try again on the new draft.
+  useEffect(() => {
+    if (why.trim().length === 0 && sharpenStatus !== 'idle') {
+      setSharpenStatus('idle');
+      setSharpenSuggestion(null);
+    }
+  }, [why, sharpenStatus]);
+
+  // After "noop", fade the chip away after a beat.
+  useEffect(() => {
+    if (sharpenStatus !== 'noop') return;
+    const t = setTimeout(() => setSharpenStatus('gone'), 1800);
+    return () => clearTimeout(t);
+  }, [sharpenStatus]);
 
   const submit = () => {
     if (!ready) return;
     if (addTask(text, why)) router.back();
   };
+
+  const onSharpen = async () => {
+    if (sharpenStatus !== 'idle') return;
+    if (!text.trim() || !why.trim()) return;
+    Haptics.selectionAsync();
+    setSharpenStatus('loading');
+    const out = await sharpenWhy(text, why);
+    if (out) {
+      setSharpenSuggestion(out);
+      setSharpenStatus('shown');
+    } else {
+      setSharpenStatus('noop');
+    }
+  };
+
+  const acceptSharpen = () => {
+    if (sharpenSuggestion) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      setWhy(sharpenSuggestion);
+    }
+    setSharpenStatus('gone');
+  };
+
+  const dismissSharpen = () => {
+    Haptics.selectionAsync();
+    setSharpenStatus('gone');
+  };
+
+  const canShowSharpen =
+    text.trim().length > 0 &&
+    why.trim().length > 0 &&
+    sharpenStatus !== 'gone';
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.cream }} edges={['bottom']}>
@@ -111,6 +165,75 @@ export default function AddTask() {
               onSubmitEditing={submit}
             />
           </Field>
+
+          {canShowSharpen ? (
+            <View style={{ marginTop: -space.s3, marginBottom: space.s4 }}>
+              {sharpenStatus === 'idle' ? (
+                <Pressable onPress={onSharpen} hitSlop={10} style={chipPressable}>
+                  <Dot color={colors.pink} />
+                  <IdleText variant="mono" style={{ color: colors.ink70 }}>
+                    SHARPEN.
+                  </IdleText>
+                </Pressable>
+              ) : null}
+
+              {sharpenStatus === 'loading' ? (
+                <View style={chipRow}>
+                  <Dot color={colors.ink30} />
+                  <IdleText variant="mono" style={{ color: colors.ink50 }}>
+                    SHARPENING.
+                  </IdleText>
+                </View>
+              ) : null}
+
+              {sharpenStatus === 'noop' ? (
+                <View style={chipRow}>
+                  <Dot color={colors.ink30} />
+                  <IdleText variant="mono" style={{ color: colors.ink50 }}>
+                    ALREADY TIGHT.
+                  </IdleText>
+                </View>
+              ) : null}
+
+              {sharpenStatus === 'shown' && sharpenSuggestion ? (
+                <View
+                  style={{
+                    backgroundColor: colors.creamSoft,
+                    paddingVertical: space.s3,
+                    paddingHorizontal: space.s4,
+                    borderRadius: radii.sm,
+                    borderLeftWidth: 2,
+                    borderLeftColor: colors.pink,
+                  }}
+                >
+                  <IdleText
+                    style={{
+                      fontFamily: 'Manrope_500Medium',
+                      fontSize: 15,
+                      lineHeight: 15 * 1.4,
+                      color: colors.ink,
+                      fontStyle: 'italic',
+                      marginBottom: space.s3,
+                    }}
+                  >
+                    {sharpenSuggestion}
+                  </IdleText>
+                  <View style={{ flexDirection: 'row', gap: space.s5 }}>
+                    <Pressable onPress={dismissSharpen} hitSlop={8}>
+                      <IdleText variant="mono" style={{ color: colors.ink50 }}>
+                        ✕  KEEP MINE
+                      </IdleText>
+                    </Pressable>
+                    <Pressable onPress={acceptSharpen} hitSlop={8}>
+                      <IdleText variant="mono" style={{ color: colors.pink }}>
+                        ✓  USE THIS
+                      </IdleText>
+                    </Pressable>
+                  </View>
+                </View>
+              ) : null}
+            </View>
+          ) : null}
 
           <PinkRule width={30} height={3} style={{ marginVertical: space.s5 }} />
 
@@ -199,6 +322,31 @@ function Field({
     </View>
   );
 }
+
+function Dot({ color }: { color: string }) {
+  return (
+    <View
+      style={{
+        width: 6,
+        height: 6,
+        borderRadius: 999,
+        backgroundColor: color,
+      }}
+    />
+  );
+}
+
+const chipRow = {
+  flexDirection: 'row' as const,
+  alignItems: 'center' as const,
+  gap: space.s2,
+  paddingVertical: space.s2,
+};
+
+const chipPressable = {
+  ...chipRow,
+  alignSelf: 'flex-start' as const,
+};
 
 const inputStyle = {
   fontFamily: 'Manrope_500Medium',

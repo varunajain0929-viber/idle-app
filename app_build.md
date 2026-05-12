@@ -156,6 +156,85 @@ If you (or a designer) want to check the design intent against what we built:
 
 A running log. Every time something is added, removed, or changed, it gets a line here.
 
+### 12 May 2026 — Lockout-time pivot rolled across the whole project
+After flipping the app from a 7pm to a 9pm lockout (and burn from 5pm to 7pm), swept the rest of the project so the story matches the code everywhere a future reader (or Claude) might look.
+
+- **Updated public-facing files:** the main landing page (HTML + the live countdown script), the mobile app mockup HTML.
+- **Updated brand & manifesto sources:** the brand guidelines, the brand concept spec, and every duplicate copy of those that lives across the design system / handoff folders.
+- **Updated internal docs:** the project's `CLAUDE.md` (so I read the new times next time), `PRODUCT_FRAMEWORK.md`, the pitch-deck outline, both `idle-app/README.md` and `app-testing.md`, and every UI-kit README that referenced "BURN / 7PM" dev buttons.
+- **Updated design-system previews:** the cards, status pills, and form-states preview HTMLs that displayed `FRIDAY · 5PM`, `LOCKED · 7PM`, etc.
+- **Not touched (intentional):** the two bundled landing pages — `Idle Landing Page _standalone_.html` and `Idle Landing Page - Antagonistic.bundled.html`. They are compiled artifacts with everything inlined as base64; they should be regenerated from the source landing page rather than hand-edited.
+- **Files touched:** ~21 files across the project. Full list in the changelog below.
+
+### 12 May 2026 — Lockout moved from 7pm to 9pm
+The 7pm lock was too aggressive. Most people who'd want this app finish work between 6 and 8pm — locking them out at 7 made the app feel hostile on day one. Pushed the boundary back two hours so the rule still bites without making people quit.
+
+- **Changed:** App locks at **9pm** on weekdays (was 7pm). Weekends still locked all day.
+- **Changed:** The Friday Burn ceremony now runs **7pm–9pm** (still the last 2 hours before lock, just shifted).
+- **Updated:** Every place those times appeared — the Rules screen, the Locked screen, the manifesto onboarding cards, the Friday line's AI prompt, and the dev panel description.
+- **Files touched:** `lib/timeGate.ts`, `components/idle/screens/RulesScreen.tsx`, `components/idle/screens/LockedScreen.tsx`, `app/onboarding.tsx`, `app/dev.tsx`, `supabase/functions/idle-ai/prompts.ts`.
+- **Re-deployed:** the Edge Function, so the Friday line knows about the new time.
+
+### 12 May 2026 — Fix: Week chart was hiding most of the week
+Spotted while testing with the seeded sample week: the chart on the "The week." screen only showed marks for today (Tuesday). Mon, Wed, Thu, Fri all sat empty even though the seed had tasks closed on those days.
+
+- **Cause:** The chart filtered tasks by *when they were first written down*, not *when activity happened*. A task added last Saturday and finished this Wednesday was getting thrown out before the chart could draw it.
+- **Fixed:** The chart now uses *when the task last changed* (the `updatedAt` stamp) as the "this week or not" test. That matches what "this week" actually means — activity that happened in this Monday–Friday window.
+- **Files touched:** `components/idle/screens/WeekScreen.tsx`.
+
+### 12 May 2026 — Fix: multi-line strike-through
+Spotted while testing: when a task title wrapped to two lines, the "done" or "refuse" strike line appeared in the empty gap between the two lines instead of crossing the actual text. Same bug on the Friday Burn screen.
+
+- **Fixed:** Tasks now measure each line of text and draw a strike per line. A two-line task gets two strike bars; a three-line task gets three. Single-line tasks look exactly the same as before.
+- **Files touched:** `components/idle/AnimatedStrike.tsx` (new, shared little helper), `components/idle/TaskRow.tsx`, `components/idle/screens/BurnScreen.tsx`.
+
+### 12 May 2026 — Phase 11: Three quiet AI features (Sharpen, Friday line, Week card)
+Idle finally has AI — but on Idle's terms. None of these features ask you to come back, none send a notification, none keep score. They each do one small thing and get out of the way.
+
+- **Added — Sharpen.** When you add a task, after you type the "why," a small `• SHARPEN.` chip appears under the field. Tap it once and Idle suggests one tighter, sharper rewrite of your reason — same Idle voice, periods and all. Take it (`✓ use this`) or keep yours (`✕ keep mine`). One try per task, then it goes away. If your why is already tight, the chip just says `ALREADY TIGHT.` and disappears.
+- **Added — Friday line.** On the Friday Burn screen, just above the list of tasks about to burn, a single honest sentence appears about the week. Not a score. Not motivation. A friend noticing a pattern, like *"You closed three. The 'call dad' one came back twice — maybe make a real plan, or let it go."* It's cached per week, so reopening the screen never re-bills the AI.
+- **Added — Week card.** Below the Friday line is a small `SHARE.` link. Tap it and a tall cream-and-pink card slides up: the week's date, the AI sentence, three of your closed tasks (✓ done / × burned), and the Idle wordmark. One pink button — `Save & share.` — captures it as a PNG and opens your phone's share sheet. Built so it actually feels worth showing a friend.
+- **Added — the private door.** All three features go through one Supabase Edge Function (`supabase/functions/idle-ai/`) so the Anthropic API key stays on Idle's server, not in the phone. Uses Claude Haiku 4.5 (cheap, fast). Voice rules are baked into the system prompts so the model can't drift into productivity-bro language.
+- **Files touched:** `lib/ai.ts` (new), `app/add-task.tsx`, `components/idle/screens/BurnScreen.tsx`, `app/week-card.tsx` (new), `components/idle/WeekCard` rendering inlined into the route, `app/_layout.tsx` (registered the modal), `supabase/functions/idle-ai/index.ts` + `prompts.ts` (new), `.env.example` (note added).
+- **Share approach (post-test fix):** Removed `react-native-view-shot` and `expo-sharing` — they need a custom build and won't run inside Expo Go. The Week card now shows a small `• SCREENSHOT TO SHARE.` instruction with the iPhone shortcut hint instead. Same outcome (a beautiful image you can share), one extra finger gesture. When we move to a real production build later, we can swap back to one-tap capture.
+- **Heads-up — one-time setup before this works:** Idle needs an Anthropic API key, and the Edge Function needs to be deployed once. Plain English steps:
+  1. Get an Anthropic key at [console.anthropic.com](https://console.anthropic.com) (a few dollars of credit is enough for many months of personal use).
+  2. In a terminal: `npm install -g supabase`, then `supabase login`, then from the `idle-app/` folder: `supabase link --project-ref gewchpasfwihyauzbvot`.
+  3. `supabase secrets set ANTHROPIC_API_KEY=sk-ant-…` (paste your real key).
+  4. `supabase functions deploy idle-ai` (only signed-in Idle accounts can call it — Supabase checks the user's session automatically, so the API key can't be drained by a stranger).
+  5. Reload the app on your phone. Sharpen, Friday line, and Week card all light up.
+
+### 12 May 2026 — Phase 10c: Auth polish (post-test fixes)
+First real walk-through on the phone surfaced three small bugs in the accounts work. Fixed.
+
+- **Fixed:** Tapping **Sign in.** signed you in successfully but left you stuck on the sign-in screen. The screen now sends you to the home gate on success.
+- **Fixed:** Same thing on **Create account.** when email confirmation is off — Supabase auto-signs the new user in, but the sign-up screen used to keep them on the "Check your inbox." page anyway. Now we check whether a session was created and route accordingly.
+- **Fixed:** Brand-new accounts on a phone where another account had already onboarded were marked as onboarded too. The legacy-flag migration was over-eager — now it migrates to the first account only and then deletes the legacy flag, so subsequent accounts see the manifesto cards fresh.
+- **Files touched:** `app/sign-in.tsx`, `app/sign-up.tsx`, `store/auth.tsx`, `app/index.tsx`.
+
+### 12 May 2026 — Phase 10b: Email links open the app, onboarding per account
+Two follow-ups to the accounts phase. First, the confirm-email link in Supabase's signup email used to open Safari and fail (there's no website to land on). Now it opens **the app**. Second, the manifesto onboarding cards were tied to the device, not the account — so a second user on the same phone would skip them. Now they're tied to the account.
+
+- **Added:** Deep-link handling in `store/auth.tsx`. When iOS hands the app a URL with a `code=...` parameter, we exchange it for a real session and the app signs the user in. Same plumbing handles password-reset links.
+- **Changed:** `signUp` and `resetPassword` now pass `emailRedirectTo` / `redirectTo` set to `idle://` (built via `Linking.createURL('/')`). Supabase uses this as the "return to" URL when someone taps the email link.
+- **Changed:** The onboarded flag in AsyncStorage. Used to be one global key (`idle.onboarded.v3`); now it's `idle.onboarded.v3.<userId>` so each account sees the cards exactly once. The old global flag is migrated to the current user on first launch so the existing tester doesn't see the cards again.
+- **Files touched:** `store/auth.tsx`, `app/onboarding.tsx`, `app/index.tsx`.
+- **Heads-up:** Two settings in the Supabase dashboard still need to be flipped by hand — **Confirm email** turned back on, and `idle://` added to the **Redirect URLs** allow-list. Instructions are in the chat with Claude.
+
+### 12 May 2026 — Phase 10: Accounts and the cloud
+Tasks used to live only on the phone. If you lost the phone, the list went with it. Now tasks live in **your account** in the cloud (Supabase), with a copy kept on the phone for speed and offline use.
+
+- **Added:** Email + password sign-in, sign-up, and a "forgot password" flow. Three new screens (`app/sign-in.tsx`, `app/sign-up.tsx`, `app/forgot-password.tsx`) styled to match Idle — cream background, pink rule, two fields, one button. Sentence case, periods, mono labels with the pink dot.
+- **Added:** An auth gate. If you're signed out, the app sends you to **Sign in.** first. Onboarding cards come *after* you have an account.
+- **Added:** A real **ACCOUNT** block on the Rules screen — shows your email and a **Sign out.** action (with a confirmation alert). Replaced the old placeholder ("you@idle.app").
+- **Added:** A small cloud sync worker. Every change to a task is saved on the phone instantly *and* marked "not yet sent." A debounced background push uploads dirty rows to Supabase. The same worker also pulls the latest state on app launch, on reconnect, and after every change.
+- **Added:** Offline support. You can add and finish tasks with no signal — they queue locally and sync the next time you're online.
+- **Changed:** The local cache key. Tasks used to live at `idle.tasks.v2`; now they live at `idle.tasks.v3.<userId>` so different accounts on the same phone can't see each other. The old v2 cache is migrated automatically on first sign-in (every row marked dirty so it uploads).
+- **Changed:** The dev-panel **Reset** action also signs you out, so a reset wipes the slate properly.
+- **Added:** `supabase/schema.sql` — a one-time recipe you run in Supabase's SQL editor. Creates the `tasks` table, turns on Row-Level Security (so users can only ever see their own rows), and adds an `updated_at` trigger for last-write-wins merging.
+- **Added:** `.env.example` showing the two values to fill in — `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY`. Copy it to `.env.local` (gitignored) and paste your project's keys.
+- **Files touched:** `package.json`, `app/_layout.tsx`, `app/index.tsx`, `app/dev.tsx`, `store/tasks.tsx`, `components/idle/screens/RulesScreen.tsx`. New files: `lib/supabase.ts`, `lib/sync.ts`, `store/auth.tsx`, `components/idle/AuthShell.tsx`, `app/sign-in.tsx`, `app/sign-up.tsx`, `app/forgot-password.tsx`, `supabase/schema.sql`, `.env.example`.
+
 ### 12 May 2026 — Phase 9b: Empty reset option
 You noticed Reset always lands on the welcome demo (three example tasks). That's what a real first-time user sees, so it's correct — but for testing the empty state and the cap, a clean-slate option is more useful.
 

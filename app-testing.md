@@ -50,7 +50,7 @@ These force a screen so you can look at it without changing the system clock. Sa
 
 | Button | What it does |
 |---|---|
-| **Show locked screen.** | Force the 7pm takeover. Dark screen, "The app is closed." |
+| **Show locked screen.** | Force the 9pm takeover. Dark screen, "The app is closed." |
 | **Show burn screen.** | Force the Friday ceremony. Reads your current open tasks and animates the pink strikes across them. |
 | **Back to normal.** | Returns to "auto" — the real clock decides what to show. |
 
@@ -116,9 +116,9 @@ This was the original dev tool. The new DEV pill does the same things and more, 
 - Open Expo Go on the phone → Rules tab → flip the **Morning bell** toggle on. iOS asks for permission. Allow it.
 - To see the notification fire today without waiting until 6am, ask me to temporarily change the trigger to "in 60 seconds" — I'll change it, you reload, see the notification, then I'll change it back.
 
-### "Does the 7pm Lockout transition smoothly?"
+### "Does the 9pm Lockout transition smoothly?"
 1. Tap **DEV** → **Show locked screen.** (the dev override route — fastest).
-2. Or wait until 7pm local time on a weekday with no override active.
+2. Or wait until 9pm local time on a weekday with no override active.
 3. Tap **DEV · EXIT** in the corner to leave.
 
 ---

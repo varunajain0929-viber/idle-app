@@ -25,6 +25,7 @@ import {
 import { colors } from '@/constants/tokens';
 import { TasksProvider } from '@/store/tasks';
 import { SettingsProvider } from '@/store/settings';
+import { AuthProvider } from '@/store/auth';
 import { DevOverrideProvider } from '@/lib/devOverride';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -71,41 +72,53 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <DevOverrideProvider>
-        <SettingsProvider>
-          <TasksProvider>
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                contentStyle: { backgroundColor: colors.cream },
-              }}
-            >
-              <Stack.Screen name="index" />
-              <Stack.Screen name="onboarding" options={{ animation: 'fade' }} />
-              <Stack.Screen
-                name="add-task"
-                options={{
-                  presentation: 'modal',
-                  animation: 'slide_from_bottom',
+        <AuthProvider>
+          <SettingsProvider>
+            <TasksProvider>
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  contentStyle: { backgroundColor: colors.cream },
                 }}
-              />
-              <Stack.Screen
-                name="about"
-                options={{
-                  presentation: 'modal',
-                  animation: 'slide_from_bottom',
-                }}
-              />
-              <Stack.Screen
-                name="dev"
-                options={{
-                  presentation: 'modal',
-                  animation: 'slide_from_bottom',
-                }}
-              />
-            </Stack>
-            <StatusBar style="dark" />
-          </TasksProvider>
-        </SettingsProvider>
+              >
+                <Stack.Screen name="index" />
+                <Stack.Screen name="onboarding" options={{ animation: 'fade' }} />
+                <Stack.Screen name="sign-in" options={{ animation: 'fade' }} />
+                <Stack.Screen name="sign-up" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="forgot-password" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen
+                  name="add-task"
+                  options={{
+                    presentation: 'modal',
+                    animation: 'slide_from_bottom',
+                  }}
+                />
+                <Stack.Screen
+                  name="about"
+                  options={{
+                    presentation: 'modal',
+                    animation: 'slide_from_bottom',
+                  }}
+                />
+                <Stack.Screen
+                  name="dev"
+                  options={{
+                    presentation: 'modal',
+                    animation: 'slide_from_bottom',
+                  }}
+                />
+                <Stack.Screen
+                  name="week-card"
+                  options={{
+                    presentation: 'modal',
+                    animation: 'slide_from_bottom',
+                  }}
+                />
+              </Stack>
+              <StatusBar style="dark" />
+            </TasksProvider>
+          </SettingsProvider>
+        </AuthProvider>
       </DevOverrideProvider>
     </SafeAreaProvider>
   );

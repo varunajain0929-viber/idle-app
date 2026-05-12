@@ -10,6 +10,7 @@ import { IdleText } from '@/components/idle/IdleText';
 import { MonoLabel } from '@/components/idle/MonoLabel';
 import { Wordmark } from '@/components/idle/Wordmark';
 import { useTasks } from '@/store/tasks';
+import { useAuth } from '@/store/auth';
 import { useDevOverride } from '@/lib/devOverride';
 import { buildSampleWeek, buildOpenFillers } from '@/lib/devSeed';
 
@@ -22,6 +23,7 @@ type ArmedMode = null | 'full' | 'empty';
 
 export default function Dev() {
   const { devReplaceAll, devClearStorage, burn, tasks, openCount } = useTasks();
+  const { signOut } = useAuth();
   const { set: setOverride } = useDevOverride();
   const [armedMode, setArmedMode] = useState<ArmedMode>(null);
   const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -79,6 +81,7 @@ export default function Dev() {
     if (resetTimer.current) clearTimeout(resetTimer.current);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     await Notifications.cancelAllScheduledNotificationsAsync().catch(() => {});
+    await signOut().catch(() => {});
     await devClearStorage();
     if (skipSeed) {
       await AsyncStorage.setItem(SEED_GATE_KEY, '1');
@@ -181,7 +184,7 @@ export default function Dev() {
         <Section label="STATE PREVIEW">
           <Action
             title="Show locked screen."
-            body="Force the 7pm takeover state. Same as long-press wordmark → locked."
+            body="Force the 9pm takeover state. Same as long-press wordmark → locked."
             onPress={showLocked}
           />
           <Action

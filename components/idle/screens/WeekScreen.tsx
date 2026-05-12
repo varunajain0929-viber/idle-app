@@ -40,7 +40,7 @@ export function WeekScreen() {
   const weekStartTs = startOfWeek(new Date()).getTime();
 
   const thisWeek = tasks.filter(
-    t => t.status !== 'open' && t.createdAt >= weekStartTs,
+    t => t.status !== 'open' && (t.updatedAt ?? t.createdAt) >= weekStartTs,
   );
   const done = tasks.filter(t => t.status === 'done');
   const refused = tasks.filter(t => t.status === 'refused');
