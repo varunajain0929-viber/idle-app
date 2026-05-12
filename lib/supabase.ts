@@ -15,9 +15,21 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   );
 }
 
+// During Expo Router's static pre-render (Node, no window) AsyncStorage's web
+// shim explodes. Short-circuit there so the bundler can build the HTML shell.
+const isBrowser = typeof window !== 'undefined';
+const ssrSafeStorage = {
+  getItem: (key: string) =>
+    isBrowser ? AsyncStorage.getItem(key) : Promise.resolve(null),
+  setItem: (key: string, value: string) =>
+    isBrowser ? AsyncStorage.setItem(key, value) : Promise.resolve(),
+  removeItem: (key: string) =>
+    isBrowser ? AsyncStorage.removeItem(key) : Promise.resolve(),
+};
+
 export const supabase = createClient(SUPABASE_URL ?? '', SUPABASE_ANON_KEY ?? '', {
   auth: {
-    storage: AsyncStorage,
+    storage: ssrSafeStorage,
     autoRefreshToken: true,
     persistSession: true,
     // Native apps can't catch the URL fragment that magic links use, but we're on
