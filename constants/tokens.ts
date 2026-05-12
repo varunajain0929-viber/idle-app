@@ -17,6 +17,8 @@ export const colors = {
   cream70: 'rgba(245, 240, 232, 0.70)',
   cream50: 'rgba(245, 240, 232, 0.50)',
   cream30: 'rgba(245, 240, 232, 0.30)',
+  cream12: 'rgba(245, 240, 232, 0.12)',
+  cream10: 'rgba(245, 240, 232, 0.10)',
 } as const;
 
 export const space = {

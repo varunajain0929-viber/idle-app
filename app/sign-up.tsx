@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { View } from 'react-native';
 import { router } from 'expo-router';
-import { space } from '@/constants/tokens';
+import { colors, space } from '@/constants/tokens';
 import { useAuth } from '@/store/auth';
+import { IdleText } from '@/components/idle/IdleText';
 import {
   AuthShell,
   AuthField,
@@ -80,6 +81,14 @@ export default function SignUp() {
         returnKeyType="go"
         onSubmitEditing={submit}
       />
+
+      {password.length > 0 && password.length < 8 ? (
+        <View style={{ marginTop: -space.s4, marginBottom: space.s4 }}>
+          <IdleText variant="mono" style={{ color: colors.pink }}>
+            NEEDS AT LEAST EIGHT CHARACTERS.
+          </IdleText>
+        </View>
+      ) : null}
 
       <AuthErrorText message={error} />
 

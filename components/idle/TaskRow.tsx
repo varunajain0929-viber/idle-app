@@ -175,7 +175,6 @@ export function TaskRow({ task, onToggle, onRefuse, onReopen, onSetEstimate }: P
           }}
         >
           <Animated.View
-            pointerEvents="none"
             style={[
               {
                 position: 'absolute',
@@ -184,6 +183,7 @@ export function TaskRow({ task, onToggle, onRefuse, onReopen, onSetEstimate }: P
                 right: 0,
                 bottom: 0,
                 borderRadius: 999,
+                pointerEvents: 'none',
                 backgroundColor: circleFillColor,
               },
               fillStyle,

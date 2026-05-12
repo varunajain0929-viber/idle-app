@@ -357,7 +357,7 @@ function BurningRow({ task, index }: { task: Task; index: number }) {
       style={{
         paddingVertical: space.s2,
         borderBottomWidth: 0.5,
-        borderBottomColor: 'rgba(245, 240, 232, 0.10)',
+        borderBottomColor: colors.cream10,
       }}
     >
       <View style={{ position: 'relative' }}>

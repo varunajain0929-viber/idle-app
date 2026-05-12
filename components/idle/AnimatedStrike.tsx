@@ -26,13 +26,13 @@ export function AnimatedStrikeLine({ progress, line, color }: Props) {
   }));
   return (
     <Animated.View
-      pointerEvents="none"
       style={[
         {
           position: 'absolute',
           left: line.x,
           top: line.y + line.height / 2 - 1,
           height: 2,
+          pointerEvents: 'none',
           backgroundColor: color,
         },
         style,

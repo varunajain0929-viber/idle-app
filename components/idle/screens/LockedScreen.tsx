@@ -170,7 +170,7 @@ function Row({ label, value, last }: { label: string; value: string; last?: bool
         justifyContent: 'space-between',
         paddingVertical: space.s3,
         borderBottomWidth: last ? 0 : 0.5,
-        borderBottomColor: 'rgba(245, 240, 232, 0.12)',
+        borderBottomColor: colors.cream12,
       }}
     >
       <IdleText

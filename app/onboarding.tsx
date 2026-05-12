@@ -110,11 +110,15 @@ export default function Onboarding() {
         }}
       >
         <Wordmark size={20} />
-        <Pressable onPress={finish} hitSlop={12}>
-          <IdleText variant="mono" tone="muted">
-            SKIP
-          </IdleText>
-        </Pressable>
+        {index < CARDS.length - 1 ? (
+          <Pressable onPress={finish} hitSlop={12}>
+            <IdleText variant="mono" tone="muted">
+              SKIP
+            </IdleText>
+          </Pressable>
+        ) : (
+          <View />
+        )}
       </View>
 
       <ScrollView

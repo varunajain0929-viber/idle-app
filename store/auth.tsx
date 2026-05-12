@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { Platform } from 'react-native';
 import type { Session, User } from '@supabase/supabase-js';
 import * as Linking from 'expo-linking';
 import { supabase } from '@/lib/supabase';
@@ -144,6 +145,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
+    // On web the Supabase auto-refresh can resurrect a stale session token
+    // from localStorage faster than React renders the sign-out, so the user
+    // appears to stay signed in. Manually wipe every `sb-*-auth-token` key.
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      try {
+        for (const key of Object.keys(window.localStorage)) {
+          if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+            window.localStorage.removeItem(key);
+          }
+        }
+      } catch {
+        /* localStorage can be unavailable in private mode — that's fine */
+      }
+    }
   }, []);
 
   const resetPassword = useCallback(async (email: string): Promise<AuthResult> => {

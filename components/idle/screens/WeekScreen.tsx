@@ -392,7 +392,6 @@ function Section({
                 </IdleText>
                 {status === 'refused' && (
                   <View
-                    pointerEvents="none"
                     style={{
                       position: 'absolute',
                       left: -2,
@@ -400,19 +399,20 @@ function Section({
                       top: '50%',
                       marginTop: -1,
                       height: 2,
+                      pointerEvents: 'none',
                       backgroundColor: colors.pink,
                     }}
                   />
                 )}
                 {status === 'burned' && (
                   <View
-                    pointerEvents="none"
                     style={{
                       position: 'absolute',
                       left: -2,
                       right: -2,
                       top: '50%',
                       marginTop: -0.5,
+                      pointerEvents: 'none',
                       height: 1,
                       borderTopWidth: 1,
                       borderTopColor: colors.ink30,

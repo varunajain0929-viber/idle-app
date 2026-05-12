@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, radii, space } from '@/constants/tokens';
 import { useTasks, type Task } from '@/store/tasks';
 import { IdleText } from '@/components/idle/IdleText';
 import { Wordmark } from '@/components/idle/Wordmark';
+import { closeModal } from '@/lib/closeModal';
 
 const MONTHS = [
   'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
@@ -257,7 +257,7 @@ export default function WeekCard() {
 
         <View style={{ marginTop: space.s6 }}>
           <Pressable
-            onPress={() => router.back()}
+            onPress={() => closeModal()}
             style={({ pressed }) => ({
               paddingVertical: space.s3 + 2,
               alignItems: 'center',

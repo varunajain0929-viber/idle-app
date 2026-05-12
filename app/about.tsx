@@ -1,12 +1,12 @@
 import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { colors, space } from '@/constants/tokens';
 import { IdleText } from '@/components/idle/IdleText';
 import { MonoLabel } from '@/components/idle/MonoLabel';
 import { PinkRule } from '@/components/idle/PinkRule';
 import { Wordmark } from '@/components/idle/Wordmark';
+import { closeModal } from '@/lib/closeModal';
 
 const MANIFESTO: string[] = [
   'The to-do list is a confession of belief.',
@@ -37,7 +37,7 @@ export default function About() {
         <Pressable
           onPress={() => {
             Haptics.selectionAsync();
-            router.back();
+            closeModal();
           }}
           hitSlop={12}
         >

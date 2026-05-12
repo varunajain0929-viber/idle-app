@@ -1,4 +1,4 @@
-import { Alert, Pressable, ScrollView, Switch, View } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, Switch, View } from 'react-native';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { colors, space } from '@/constants/tokens';
@@ -72,21 +72,26 @@ export function RulesScreen() {
   };
 
   const handleSignOut = () => {
-    Alert.alert(
-      'Sign out.',
-      'Your tasks are saved in the cloud. Sign back in any time to bring them back.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Sign out',
-          style: 'destructive',
-          onPress: () => {
-            Haptics.selectionAsync();
-            void signOut();
-          },
-        },
-      ],
-    );
+    const title = 'Sign out.';
+    const message =
+      'Your tasks are saved in the cloud. Sign back in any time to bring them back.';
+    const doSignOut = () => {
+      Haptics.selectionAsync();
+      void signOut();
+    };
+    // React Native's Alert.alert only renders the title on web (the buttons
+    // are not real buttons), so the "Sign out" tap never fires. Use the
+    // browser's native confirm() there instead.
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.confirm(`${title}\n\n${message}`)) {
+        doSignOut();
+      }
+      return;
+    }
+    Alert.alert(title, message, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Sign out', style: 'destructive', onPress: doSignOut },
+    ]);
   };
 
   return (

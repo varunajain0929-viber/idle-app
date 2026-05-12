@@ -8,13 +8,13 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { colors, radii, space } from '@/constants/tokens';
 import { useTasks } from '@/store/tasks';
 import { IdleText } from '@/components/idle/IdleText';
 import { PinkRule } from '@/components/idle/PinkRule';
 import { sharpenWhy } from '@/lib/ai';
+import { closeModal } from '@/lib/closeModal';
 
 type SharpenStatus = 'idle' | 'loading' | 'shown' | 'noop' | 'gone';
 
@@ -47,7 +47,7 @@ export default function AddTask() {
 
   const submit = () => {
     if (!ready) return;
-    if (addTask(text, why)) router.back();
+    if (addTask(text, why)) closeModal();
   };
 
   const onSharpen = async () => {
@@ -239,7 +239,7 @@ export default function AddTask() {
 
           <View style={{ flexDirection: 'row', gap: space.s3 }}>
             <Pressable
-              onPress={() => router.back()}
+              onPress={() => closeModal()}
               style={({ pressed }) => ({
                 flex: 1,
                 paddingVertical: space.s3 + 2,

@@ -13,6 +13,7 @@ import { useTasks } from '@/store/tasks';
 import { useAuth } from '@/store/auth';
 import { useDevOverride } from '@/lib/devOverride';
 import { buildSampleWeek, buildOpenFillers } from '@/lib/devSeed';
+import { closeModal } from '@/lib/closeModal';
 
 const RESET_ARM_MS = 3000;
 // idle.onboarded.v1 gates the three example seed tasks in store/tasks.tsx — pre-setting it
@@ -22,6 +23,15 @@ const SEED_GATE_KEY = 'idle.onboarded.v1';
 type ArmedMode = null | 'full' | 'empty';
 
 export default function Dev() {
+  // All hooks run first, then the production gate decides whether to render
+  // anything. Rules of Hooks: same hook order every render. The early-return
+  // below must sit *after* every hook.
+  const { devReplaceAll, devClearStorage, burn, tasks, openCount } = useTasks();
+  const { signOut } = useAuth();
+  const { set: setOverride } = useDevOverride();
+  const [armedMode, setArmedMode] = useState<ArmedMode>(null);
+  const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Hard production gate. Expo Router registers every file in app/ as a route,
   // so without this check the destructive dev actions below (sign-out, wipe
   // every idle.* key, force burn) could be reached in a production build via
@@ -31,16 +41,10 @@ export default function Dev() {
   }, []);
   if (!__DEV__) return null;
 
-  const { devReplaceAll, devClearStorage, burn, tasks, openCount } = useTasks();
-  const { signOut } = useAuth();
-  const { set: setOverride } = useDevOverride();
-  const [armedMode, setArmedMode] = useState<ArmedMode>(null);
-  const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const seedWeek = () => {
     Haptics.selectionAsync();
     devReplaceAll(buildSampleWeek());
-    router.back();
+    closeModal();
   };
 
   const fillCap = () => {
@@ -52,31 +56,31 @@ export default function Dev() {
     }
     const fillers = buildOpenFillers(needed);
     devReplaceAll([...tasks, ...fillers]);
-    router.back();
+    closeModal();
   };
 
   const showLocked = () => {
     Haptics.selectionAsync();
     setOverride('locked');
-    router.back();
+    closeModal();
   };
 
   const showBurn = () => {
     Haptics.selectionAsync();
     setOverride('burn');
-    router.back();
+    closeModal();
   };
 
   const backToNormal = () => {
     Haptics.selectionAsync();
     setOverride('auto');
-    router.back();
+    closeModal();
   };
 
   const burnNow = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     burn();
-    router.back();
+    closeModal();
   };
 
   const arm = (mode: 'full' | 'empty') => {
@@ -136,7 +140,7 @@ export default function Dev() {
         <Pressable
           onPress={() => {
             Haptics.selectionAsync();
-            router.back();
+            closeModal();
           }}
           hitSlop={12}
         >

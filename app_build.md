@@ -156,6 +156,27 @@ If you (or a designer) want to check the design intent against what we built:
 
 A running log. Every time something is added, removed, or changed, it gets a line here.
 
+### 12 May 2026 — Fixed the bugs the QA pass found
+Worked through the findings list from the QA report and patched everything that wasn't a phone-only check. Verified by re-running the QA web flow end-to-end after the changes; type-check + lint both clean.
+
+- **Add Task / Cancel / CLOSE on the web now actually close the modal.** Every `router.back()` in the modal screens was failing on the web when the back-stack was empty (after a refresh or hot-reload). Added a tiny `lib/closeModal.ts` helper that calls back when there's history and falls back to `router.replace('/')` when there isn't. Used everywhere a modal needs to dismiss.
+- **Sign Out now signs you out, even on the web.** Two problems were stacked: `Alert.alert`'s confirmation buttons don't render natively on the web (so the "Sign out" tap never fired), and Supabase's auto-refresh sometimes resurrected a stale session token from localStorage anyway. Fix: detect web in `RulesScreen.handleSignOut` and use `window.confirm()` there, then explicitly wipe every `sb-*-auth-token` localStorage key inside the `signOut` callback. Native path (iOS/Android) is unchanged — it still uses `Alert.alert`.
+- **Sign-up now tells you why the button is grey** when your password is too short. Added a small pink mono caption `• NEEDS AT LEAST EIGHT CHARACTERS.` that appears below the password field once you've typed something but it's still under 8 characters.
+- **Dev panel lint clean.** Moved every hook above the `if (!__DEV__) return null;` early return in `app/dev.tsx`. Rules of Hooks is happy; `npm run lint` now reports zero errors.
+- **SKIP no longer shows on the last onboarding card.** The button only renders when you're not on the final card. On card 5 you only see "Begin." — exactly one way forward.
+- **Cream-alpha colours now use design tokens.** Added `cream10` and `cream12` to `constants/tokens.ts` and replaced the hardcoded `rgba(...)` strings in `LockedScreen` and `BurnScreen` with token references.
+- **Deleted the leftover Expo template files.** `constants/theme.ts`, `components/themed-text.tsx`, `components/themed-view.tsx`, `hooks/use-theme-color.ts`, plus the two `use-color-scheme*` hooks. Nothing in the Idle UI imported them — they were defaults from `npx create-expo-app` that never got cleaned up. Less code, no leftover blue/teal hex codes.
+- **`props.pointerEvents is deprecated` warning fixed.** Moved the prop into the style object on `TaskRow`, `AnimatedStrike`, and the two strikethroughs on the `WeekScreen`. Console is now silent at boot.
+- **Files touched:** `lib/closeModal.ts` (new), `app/add-task.tsx`, `app/about.tsx`, `app/dev.tsx`, `app/week-card.tsx`, `app/onboarding.tsx`, `app/sign-up.tsx`, `store/auth.tsx`, `components/idle/screens/RulesScreen.tsx`, `components/idle/screens/LockedScreen.tsx`, `components/idle/screens/BurnScreen.tsx`, `components/idle/TaskRow.tsx`, `components/idle/AnimatedStrike.tsx`, `components/idle/screens/WeekScreen.tsx`, `constants/tokens.ts`. Deleted: `constants/theme.ts`, `components/themed-text.tsx`, `components/themed-view.tsx`, `hooks/` (whole folder).
+
+### 12 May 2026 — Full QA pass across the whole app
+Ran a professional QA sweep against a 97-item checklist covering every screen, every button, every brand rule. Drove the web build through a browser; phone-only items called out separately. Full report at [qa-findings-2026-05-12.md](qa-findings-2026-05-12.md).
+
+- **5 real bugs found.** One blocker (web build crashed before booting — fixed in this same pass, see the entry below). Three major issues: Add Task / Cancel / Close buttons don't dismiss the modal on web (`router.back()` fails when the back-stack is empty), Sign Out doesn't reliably sign you out on web (the `Alert.alert` confirmation seems to misbehave under React Native Web), and the short-password sign-up gives no inline feedback so a non-technical user might think the button is broken. Three smaller polish issues: a lint failure in the dev panel, hardcoded cream-alpha colours bypassing the design tokens, leftover Expo template files with non-brand hex codes.
+- **67 things pass.** Auth, onboarding, the daily loop, the cap of 5, the Week screen math, the Locked / Burn takeovers, the AI sharpener, brand voice, period rules, and the AI reflection on the Burn screen all work as designed.
+- **8 items are phone-only** — the carry banner, real lockout time, weekend lockout, morning bell notification, long-press wordmark, sign-out alert, and cross-device + offline sync. Plain-English instructions for those are in the findings file.
+- **Files touched in this pass:** `lib/supabase.ts` (the fix that unblocked QA itself).
+
 ### 12 May 2026 — Fix: Supabase auth crashed during web pre-render
 Hit this while running the web build to capture App Store screenshots. The Supabase auth client was handed `AsyncStorage` directly as its storage adapter. AsyncStorage's web shim peeks at `window.localStorage` the moment it's wired up, and during Expo Router's static export there is no `window` (it's running in Node, no browser). The whole build crashed at `getValue` with "window is not defined" before a single screen could render.
 
