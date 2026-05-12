@@ -156,6 +156,29 @@ If you (or a designer) want to check the design intent against what we built:
 
 A running log. Every time something is added, removed, or changed, it gets a line here.
 
+### 12 May 2026 — App Store prep (code side)
+Did the small code changes the App Store needs before we can ask Apple to publish Idle. Nothing about the app behaves differently — these are stamps and paperwork, not features.
+
+- **Gave the app its permanent name on Apple's books.** Added `bundleIdentifier: "com.idle.app"` and `buildNumber: "1"` to `app.json`. Apple uses the bundle ID to tell two apps apart forever; it never shows up to users.
+- **Told Apple we don't use exotic encryption.** Added `ITSAppUsesNonExemptEncryption: false` to `app.json`. We only use standard HTTPS (the same thing every browser uses), so this flag skips Apple's encryption export form on every future build.
+- **Set up the build pipeline.** Created `eas.json` with three build types: development (with dev tools), preview (internal sharing), and production (the one we'll submit). Also wired in `eas submit` so we can upload to TestFlight with one command. The Apple Team ID and App Store Connect ID are placeholders for now — they'll be filled in once Apple approves the developer account.
+- **Pinned `eas-cli`** in `package.json` devDependencies so a fresh clone of the repo can build without extra setup.
+- **Wrote the privacy policy.** Plain-English HTML page at the project root: `privacy.html`. Says exactly what Idle collects (email + your tasks) and exactly what it doesn't (location, contacts, ads, trackers). Will get hosted on GitHub Pages and the URL will go into App Store Connect.
+- **Verification:** `npx tsc --noEmit` is clean. `npm run lint` shows 5 pre-existing errors in `app/dev.tsx` (hooks-after-early-return in the dev-only panel); they don't ship to production and don't block builds.
+- **Files touched:** `idle-app/app.json`, `idle-app/eas.json` (new), `idle-app/package.json`, `privacy.html` (new, in project root).
+- **You still need to do (outside the code):** enroll in the Apple Developer Program at developer.apple.com/programs/enroll (~$99/year, 24–48h approval), create a free Expo account at expo.dev/signup, host `privacy.html` on GitHub Pages.
+
+### 12 May 2026 — Pre-launch security audit and hardening
+Did a full security pass on the app before the App Store submission. Idle is small but it does have a cloud — Supabase for tasks, an Edge Function that talks to Claude — so a few things needed locking down before strangers could touch it. Five things changed, in plain English:
+
+- **The Claude helper now checks who's calling.** The function that rewrites your "why" used to answer anyone who knocked. Now it only answers signed-in people. Anyone else gets turned away at the door. It also limits each person to 20 requests a minute so a bad actor can't run our bill up.
+- **The cloud now refuses giant tasks.** The database now caps how long a task text or why can be (200 characters each), how long an ID can be, and how many rows one account can have (1,000 — far more than a real person ever needs, far less than abuse). If a tampered phone tries to send a 50KB blob, the database says no.
+- **The hidden DEV panel is now truly hidden.** Before today, someone clever could open `idle://dev` on a shipped build and wipe your tasks. Now the dev screen quietly redirects to home unless this is a real development build. The wipe-everything helpers underneath also do nothing in a real build, even if something reached them.
+- **Passwords are stronger.** Minimum is 8 characters (was 6) and must mix letters and digits. Emails go through a quick sanity check before they hit the server. Old accounts keep working.
+- **Smaller polish:** stopped echoing Claude's error messages into our server logs (they could contain things users typed), tightened CORS so random websites can't ping the helper, added a tiny rate-limit reset window.
+- **Files touched:** `supabase/functions/idle-ai/index.ts`, `supabase/schema.sql`, `supabase/config.toml`, `app/dev.tsx`, `app/sign-in.tsx`, `app/sign-up.tsx`, `store/auth.tsx`, `store/tasks.tsx`.
+- **You still need to do (in the Supabase dashboard):** apply the new `schema.sql` (one paste-and-run in the SQL Editor), bump the password rules to match (Auth → Policies → minimum length 8, require letters + digits), and re-deploy the Edge Function. The full deploy steps are in this file's earlier entries.
+
 ### 12 May 2026 — Lockout-time pivot rolled across the whole project
 After flipping the app from a 7pm to a 9pm lockout (and burn from 5pm to 7pm), swept the rest of the project so the story matches the code everywhere a future reader (or Claude) might look.
 
