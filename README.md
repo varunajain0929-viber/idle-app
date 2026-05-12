@@ -61,4 +61,4 @@ Pre-launch. Work in progress.
 
 ## License
 
-All rights reserved. © Varun Ajain.
+All rights reserved. © Varuna Jain.
